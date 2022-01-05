@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from PyQt5.QtCore import QThread, QObject, pyqtSignal
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QPixmap
 import cv2 as cv
 import sys
 import numpy as np
@@ -36,9 +36,17 @@ class Window(QMainWindow):
         self.thr.finished.connect(self.thr.deleteLater)
         self.stream.frameSig.connet(self.updateFrame)
 
+        self.thr.start()
 
+    def updateFrame(self):
+        frame= self.stream.frame
+        image= QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format.Format_RGB888).rgbSwapped()
+        self.imageFrame.setPixmap(QPixmap.fromImage(image))
 
 
 
 
 app= QApplication(sys.argv)
+win= Window()
+win.show()
+sys.exit(app.exec_())
