@@ -4,7 +4,7 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap
 import cv2 as cv
 import sys
-import numpy as np
+import time
 
 
 class Streamer(QObject):
@@ -14,6 +14,7 @@ class Streamer(QObject):
         while True:
             _, self.frame= capture.read()
             self.frameSig.emit()
+            time.sleep(1/30)
 
 
 class Window(QMainWindow):
@@ -22,11 +23,8 @@ class Window(QMainWindow):
         self.initUI()
 
     def initUI(self):
-
-        self.setFixedSize(640, 480)
         
         self.imageFrame= QtWidgets.QLabel(self)
-        self.imageFrame.setGeometry(10,10,620,460)
 
         self.thr= QThread()
         self.stream= Streamer()
@@ -34,13 +32,18 @@ class Window(QMainWindow):
 
         self.thr.started.connect(self.stream.run)
         self.thr.finished.connect(self.thr.deleteLater)
-        self.stream.frameSig.connet(self.updateFrame)
+        self.stream.frameSig.connect(self.updateFrame)
 
         self.thr.start()
 
     def updateFrame(self):
         frame= self.stream.frame
-        image= QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format.Format_RGB888).rgbSwapped()
+        height, width= frame.shape[0], frame.shape[1]
+
+        self.setFixedSize(width+20, height+20)
+        self.imageFrame.setGeometry(10,10, width,height)
+        
+        image= QImage(frame.data, width, height, QImage.Format.Format_RGB888).rgbSwapped()
         self.imageFrame.setPixmap(QPixmap.fromImage(image))
 
 
