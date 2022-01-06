@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
 from PyQt5.QtCore import QThread, QObject, pyqtSignal
 from PyQt5.QtGui import QImage, QPixmap
 import cv2 as cv
@@ -20,6 +20,8 @@ class Streamer(QObject):
 class Window(QMainWindow):
     def __init__(self):
         super(Window, self).__init__()
+        self.streaming= False
+        self.frameText= ''
         self.initUI()
 
     def initUI(self):
@@ -36,6 +38,18 @@ class Window(QMainWindow):
 
         self.thr.start()
 
+        self.startBtn= QtWidgets.QPushButton(self)
+        self.stopBtn= QtWidgets.QPushButton(self)
+        self.writeBtn= QtWidgets.QPushButton(self)
+        self.startBtn.setText('start')
+        self.stopBtn.setText('stop')
+        self.writeBtn.setText('write')
+        self.startBtn.clicked.connect(self.startStream)
+        self.stopBtn.clicked.connect(self.stopStream)
+        self.writeBtn.clicked.connect(self.addText)
+
+        self.textInput= QtWidgets.QLineEdit(self)
+
     def updateFrame(self):
         frame= self.stream.frame
         height, width= frame.shape[0], frame.shape[1]
@@ -43,10 +57,18 @@ class Window(QMainWindow):
         self.setFixedSize(width+20, height+20)
         self.imageFrame.setGeometry(10,10, width,height)
         
-        image= QImage(frame.data, width, height, QImage.Format.Format_RGB888).rgbSwapped()
-        self.imageFrame.setPixmap(QPixmap.fromImage(image))
+        if self.streaming:
+            image= QImage(frame.data, width, height, QImage.Format.Format_RGB888).rgbSwapped()
+            self.imageFrame.setPixmap(QPixmap.fromImage(image))
 
+    def startStream(self):
+        self.streaming= True
+    
+    def stopStream(self):
+        self.streaming= False
 
+    def addText(self):
+        self.frameText= self.textInput.text() 
 
 
 app= QApplication(sys.argv)
