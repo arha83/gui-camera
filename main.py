@@ -10,10 +10,12 @@ import time
 class Streamer(QObject):
     frameSig= pyqtSignal()
     def run(self):
-        capture= cv.VideoCapture(0)
+        self.capture= cv.VideoCapture(0, cv.CAP_DSHOW)
+        while not self.capture.isOpened(): pass
         while True:
-            ret , self.frame= capture.read()
-            self.frameSig.emit()
+            ret , self.frame= self.capture.read()
+            if ret:
+                self.frameSig.emit()
             time.sleep(1/30)
 
 
@@ -54,14 +56,15 @@ class Window(QMainWindow):
         frame= self.stream.frame
         height, width= frame.shape[0], frame.shape[1]
 
-        self.setFixedSize(width+20, height+120)
+        self.setFixedSize(width+20, height+140)
         self.imageFrame.setGeometry(10,60, width,height)
         self.startBtn.setGeometry(10,10, 120, 40)
         self.stopBtn.setGeometry(width-110, 10, 120, 40)
-        self.textInput.setGeometry(width/2+10-(width/6), height+70, width/3, 40)
+        self.textInput.setGeometry(width//2+10-(width//6), height+70, width//3, 20)
+        self.writeBtn.setGeometry(width//2+10-(width//6), height+100, width//3, 30)
         
         if self.streaming:
-            frame_text= cv.putText(frame, self.frameText, (10, 10), cv.FONT_HERSHEY_PLAIN, 1.0, (0,255,0))
+            frame_text= cv.putText(frame, self.frameText, (10, 20), cv.FONT_HERSHEY_PLAIN, 1.0, (0,255,0))
             image= QImage(frame_text.data, width, height, QImage.Format.Format_RGB888).rgbSwapped()
             self.imageFrame.setPixmap(QPixmap.fromImage(image))
 
@@ -74,6 +77,10 @@ class Window(QMainWindow):
 
     def addText(self):
         self.frameText= self.textInput.text()
+
+    def closeEvent(self, event):
+        self.stream.capture.release()
+        event.accept()
 
 
 app= QApplication(sys.argv)
