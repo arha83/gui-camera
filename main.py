@@ -10,7 +10,7 @@ import time
 class Streamer(QObject):
     frameSig= pyqtSignal()
     def run(self):
-        self.capture= cv.VideoCapture(0, cv.CAP_DSHOW)
+        self.capture= cv.VideoCapture(0)
         while not self.capture.isOpened(): pass
         while True:
             ret , self.frame= self.capture.read()
